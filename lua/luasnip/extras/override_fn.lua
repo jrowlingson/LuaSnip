@@ -21,22 +21,24 @@ end
 ---@return function: fn(...). The varargs are a list of values passed to
 --- `apply_override`.
 local function override_any(fn, ...)
-	local override_descriptions = {...}
+	local override_descriptions = { ... }
 
 	return function(...)
-		local override_arg_values = {...}
+		local override_arg_values = { ... }
 
 		return function(...)
-			local direct_args = {...}
+			local direct_args = { ... }
 
 			-- override values of direct argument.
 			for override_indx, od in ipairs(override_descriptions) do
 				local arg_indx = od.arg_indx
 
 				-- still allow overriding with directly-passed keys.
-				direct_args[arg_indx] = od.apply_override(direct_args[arg_indx], override_arg_values[override_indx])
+				direct_args[arg_indx] = od.apply_override(
+					direct_args[arg_indx],
+					override_arg_values[override_indx]
+				)
 			end
-
 
 			-- important: http://www.lua.org/manual/5.3/manual.html#3.4
 			-- Passing arguments after the results from `unpack` would mess all this
@@ -46,21 +48,19 @@ local function override_any(fn, ...)
 	end
 end
 
-
-M.fmt = override_any(
-	fmt,
-	{arg_indx = 3, apply_override = default_override} )
+M.fmt = override_any(fmt, { arg_indx = 3, apply_override = default_override })
 
 local function context_override(arg, override)
 	if type(arg) == "string" then
-		arg = {trig = arg}
+		arg = { trig = arg }
 	end
 	-- both are table or nil now.
 	return default_override(arg, override)
 end
 M.snippet = override_any(
 	snippet,
-	{arg_indx = 1, apply_override = context_override},
-	{arg_indx = 3, apply_override = default_override} )
+	{ arg_indx = 1, apply_override = context_override },
+	{ arg_indx = 3, apply_override = default_override }
+)
 
 return M
